@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { addMonths, format, getDaysInMonth, startOfMonth, eachMonthOfInterval, endOfYear, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { mockTransactions } from '@/lib/data';
@@ -39,7 +39,10 @@ const calculateMonthlySummary = (transactions: Transaction[]) => {
   return monthlySummary;
 };
 
+const LOCAL_STORAGE_KEY = 'transactions';
+
 export function FinancialProjection() {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const today = new Date();
   const futureMonths = eachMonthOfInterval({
     start: startOfMonth(today),
@@ -48,12 +51,46 @@ export function FinancialProjection() {
 
   const [projectionMonth, setProjectionMonth] = useState(format(endOfMonth(today), 'yyyy-MM-dd'));
   
+  useEffect(() => {
+    try {
+      const storedTransactions = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (storedTransactions) {
+        setTransactions(JSON.parse(storedTransactions));
+      } else {
+        setTransactions(mockTransactions);
+      }
+    } catch (error) {
+      console.error("Failed to read from localStorage", error);
+      setTransactions(mockTransactions);
+    }
+
+    const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === LOCAL_STORAGE_KEY) {
+            try {
+                const storedTransactions = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (storedTransactions) {
+                    setTransactions(JSON.parse(storedTransactions));
+                }
+            } catch (error) {
+                console.error("Failed to read from localStorage on change", error);
+            }
+        }
+    }
+    
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+
+  }, []);
+
   const processedData = useMemo(() => {
-    const monthlySummary = calculateMonthlySummary(mockTransactions);
+    const monthlySummary = calculateMonthlySummary(transactions);
     const lastRecordedMonth = Array.from(monthlySummary.keys()).sort().pop() || format(today, 'yyyy-MM');
     const base = monthlySummary.get(lastRecordedMonth) || { income: 0, fixed: 0, variable: 0 };
     
-    let balance = mockTransactions.reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
+    let balance = transactions.reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
 
     const projectionInterval = {
       start: startOfMonth(today),
@@ -90,15 +127,15 @@ export function FinancialProjection() {
     });
 
     return chartData;
-  }, [projectionMonth]);
+  }, [projectionMonth, transactions, today]);
 
   const dailyStatus = useMemo(() => {
-    const daysInMonth = getDaysInMonth(today);
-    const lastRecordedMonth = Array.from(calculateMonthlySummary(mockTransactions).keys()).sort().pop() || format(today, 'yyyy-MM');
-    const base = calculateMonthlySummary(mockTransactions).get(lastRecordedMonth) || { income: 0, fixed: 0, variable: 0 };
+    const monthlySummary = calculateMonthlySummary(transactions);
+    const lastRecordedMonth = Array.from(monthlySummary.keys()).sort().pop() || format(today, 'yyyy-MM');
+    const base = monthlySummary.get(lastRecordedMonth) || { income: 0, fixed: 0, variable: 0 };
 
-    const todayIncome = mockTransactions.filter(t => format(new Date(t.date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') && t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-    const todayExpense = mockTransactions.filter(t => format(new Date(t.date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') && t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+    const todayIncome = transactions.filter(t => format(new Date(t.date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') && t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+    const todayExpense = transactions.filter(t => format(new Date(t.date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') && t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
 
     return {
       today: {
@@ -112,9 +149,9 @@ export function FinancialProjection() {
         balance: base.income - (base.fixed + base.variable),
       }
     };
-  }, []);
+  }, [transactions, today]);
   
-  const finalBalance = processedData[processedData.length - 1]?.saldo || 0;
+  const finalBalance = processedData.length > 0 ? processedData[processedData.length - 1]?.saldo || 0 : 0;
 
   const chartConfig = {
     receita: { label: "Receita", color: "hsl(var(--accent))" },
