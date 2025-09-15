@@ -89,8 +89,9 @@ export function FinancialProjection() {
 
     const monthlySummary = calculateMonthlySummary(transactions);
     
+    const previousMonth = subMonths(startOfMonth(today), 1);
     const initialBalance = transactions
-        .filter(t => isBefore(new Date(t.date), startOfMonth(today)))
+        .filter(t => !isBefore(new Date(t.date), previousMonth))
         .reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
 
     const projectionInterval = {
@@ -105,19 +106,16 @@ export function FinancialProjection() {
     let lastMonthFixedIncome = 0;
     let lastMonthFixedExpense = 0;
     
-    // Find the last month with actual data to get fixed values for projection
     const allMonthKeys = Array.from(monthlySummary.keys()).sort().reverse();
-    const lastRealMonthKey = allMonthKeys.find(key => {
-        const monthDate = new Date(`${key}-01T12:00:00`);
-        return !isBefore(endOfMonth(monthDate), today);
+    const lastRealMonthKeyWithFixedValues = allMonthKeys.find(key => {
+        const data = monthlySummary.get(key);
+        return data && (data.income.fixed > 0 || data.expense.fixed > 0);
     });
 
-    if (lastRealMonthKey) {
-        const lastRealMonthData = monthlySummary.get(lastRealMonthKey);
-        if (lastRealMonthData) {
-            lastMonthFixedIncome = lastRealMonthData.income.fixed;
-            lastMonthFixedExpense = lastRealMonthData.expense.fixed;
-        }
+    if (lastRealMonthKeyWithFixedValues) {
+        const lastData = monthlySummary.get(lastRealMonthKeyWithFixedValues)!;
+        lastMonthFixedIncome = lastData.income.fixed;
+        lastMonthFixedExpense = lastData.expense.fixed;
     }
 
 
@@ -128,20 +126,23 @@ export function FinancialProjection() {
         const historicalData = monthlySummary.get(monthKey);
         
         let totalIncome, totalExpense;
-        let isProjection = true;
         
-        if (historicalData) {
-            // Use actual data if it exists for the month
+        if (historicalData && isBefore(monthDate, today)) {
             totalIncome = historicalData.income.fixed + historicalData.income.variable;
             totalExpense = historicalData.expense.fixed + historicalData.expense.variable;
-            isProjection = false; // This is a real month's data
-
-            // Update fixed values from the latest real month's data
-            lastMonthFixedIncome = historicalData.income.fixed;
-            lastMonthFixedExpense = historicalData.expense.fixed;
-
-        } else { // Future months projection
-            // Project using only fixed values from the last known real month
+            
+            if(historicalData.income.fixed > 0 || historicalData.expense.fixed > 0) {
+              lastMonthFixedIncome = historicalData.income.fixed;
+              lastMonthFixedExpense = historicalData.expense.fixed;
+            }
+        } else if (isSameMonth(monthDate, today) && historicalData) {
+            totalIncome = historicalData.income.fixed + historicalData.income.variable;
+            totalExpense = historicalData.expense.fixed + historicalData.expense.variable;
+            if(historicalData.income.fixed > 0 || historicalData.expense.fixed > 0) {
+              lastMonthFixedIncome = historicalData.income.fixed;
+              lastMonthFixedExpense = historicalData.expense.fixed;
+            }
+        } else { 
             totalIncome = lastMonthFixedIncome;
             totalExpense = lastMonthFixedExpense;
         }
@@ -153,9 +154,8 @@ export function FinancialProjection() {
             month: monthName,
             receita: totalIncome,
             despesa: totalExpense,
-            saldoMensal: monthBalance, // Monthly balance for the bar
-            saldoAcumulado: accumulatedBalance, // Accumulated balance for the line
-            isProjection,
+            saldoMensal: monthBalance,
+            saldoAcumulado: accumulatedBalance,
         };
     });
 
