@@ -35,6 +35,11 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 });
 
+const dateFormatter = (dateString: string | undefined) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString('pt-BR', {timeZone: 'UTC'})
+}
+
 type TransactionsTableProps = {
   transactions: Transaction[];
   onEdit: (transaction: Transaction) => void;
@@ -87,7 +92,8 @@ export function TransactionsTable({ transactions, onEdit, onDelete, onClearAll }
             <TableHeader>
               <TableRow>
                 <TableHead>Descrição</TableHead>
-                <TableHead>Data</TableHead>
+                <TableHead>Competência</TableHead>
+                <TableHead>Pagamento/Vencimento</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
@@ -99,12 +105,13 @@ export function TransactionsTable({ transactions, onEdit, onDelete, onClearAll }
                 transactions.map((t) => (
                   <TableRow key={t.id}>
                     <TableCell className="font-medium">{t.description}</TableCell>
-                    <TableCell>{new Date(t.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</TableCell>
+                    <TableCell>{dateFormatter(t.date)}</TableCell>
+                    <TableCell>{t.type === 'income' ? dateFormatter(t.paymentDate) : dateFormatter(t.dueDate)}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={cn(t.type === 'income' ? 'border-accent text-accent-foreground' : 'border-destructive/80 text-destructive')}>{typeTranslations[t.type]}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{categoryTranslations[t.category]}</Badge>
+                      <Badge variant="secondary">{t.type === 'expense' ? categoryTranslations[t.category] : '-'}</Badge>
                     </TableCell>
                     <TableCell className={cn("text-right font-mono", t.type === 'income' ? 'text-accent-foreground' : 'text-destructive')}>
                       {t.type === 'income' ? '+' : '-'}{currencyFormatter.format(t.amount)}
@@ -127,7 +134,7 @@ export function TransactionsTable({ transactions, onEdit, onDelete, onClearAll }
                 ))
               ) : (
                 <TableRow>
-                    <TableCell colSpan={6} className="text-center h-24">Nenhuma transação encontrada.</TableCell>
+                    <TableCell colSpan={7} className="text-center h-24">Nenhuma transação encontrada.</TableCell>
                 </TableRow>
               )}
             </TableBody>

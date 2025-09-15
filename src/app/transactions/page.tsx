@@ -128,8 +128,8 @@ export default function TransactionsPage() {
         <p className="text-muted-foreground">Gerencie suas receitas e despesas.</p>
       </header>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <div className="xl:col-span-2">
           <TransactionsTable 
             transactions={transactions}
             onEdit={openEditDialog}

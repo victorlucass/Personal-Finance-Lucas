@@ -28,7 +28,7 @@ export function EditTransactionDialog({
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Editar Transação</DialogTitle>
           <DialogDescription>
