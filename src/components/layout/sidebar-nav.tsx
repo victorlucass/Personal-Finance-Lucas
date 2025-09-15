@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
-  CreditCard,
   ArrowRightLeft,
   DollarSign,
 } from "lucide-react";
@@ -24,7 +23,6 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 const navItems = [
   { href: "/", label: "Painel", icon: LayoutDashboard },
   { href: "/transactions", label: "Transações", icon: ArrowRightLeft },
-  { href: "/credit-card", label: "Cartão de Crédito", icon: CreditCard },
 ];
 
 export function SidebarNav() {

@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import type { Transaction } from "@/lib/types";
 
 const formSchema = z.object({
   description: z.string().min(2, "A descrição é muito curta."),
@@ -24,13 +25,18 @@ const formSchema = z.object({
   date: z.date(),
 });
 
-export function TransactionForm() {
+type TransactionFormProps = {
+  onAddTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+}
+
+export function TransactionForm({ onAddTransaction }: TransactionFormProps) {
     const { toast } = useToast();
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             description: "",
+            amount: 0,
             type: "expense",
             category: "variable",
             date: new Date(),
@@ -38,12 +44,19 @@ export function TransactionForm() {
     });
 
     function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log(values);
+        const transactionData = { ...values, date: values.date.toISOString() };
+        onAddTransaction(transactionData);
         toast({
             title: "Transação Adicionada",
             description: `Adicionado "${values.description}" de R$${values.amount}.`,
         });
-        form.reset();
+        form.reset({
+            description: "",
+            amount: 0,
+            type: "expense",
+            category: "variable",
+            date: new Date(),
+        });
     }
 
     return (
@@ -102,7 +115,7 @@ export function TransactionForm() {
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) =>
-                              date > new Date() || date < new Date("1900-01-01")
+                              date > new Date() || date < new Date("2000-01-01")
                             }
                             initialFocus
                             locale={ptBR}
@@ -163,9 +176,6 @@ export function TransactionForm() {
                 <Button type="submit" className="w-full">
                     <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Transação
                 </Button>
-                <FormDescription className="text-center text-xs">
-                    Isso é uma demonstração. As transações não serão salvas.
-                </FormDescription>
             </form>
         </Form>
     );
