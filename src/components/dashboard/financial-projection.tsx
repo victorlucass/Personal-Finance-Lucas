@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import { addMonths, format, startOfMonth, eachMonthOfInterval, endOfYear, endOfMonth, startOfToday, isSameMonth, subMonths } from 'date-fns';
+import { addMonths, format, startOfMonth, eachMonthOfInterval, endOfYear, endOfMonth, startOfToday, isSameMonth, subMonths, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -88,11 +88,10 @@ export function FinancialProjection() {
     if (transactions.length === 0) return { chartData: [], finalBalance: 0 };
     
     const monthlySummary = calculateMonthlySummary(transactions);
-    
-    const allMonthKeys = Array.from(monthlySummary.keys()).sort();
-    
+
+    // Calculate balance from all transactions before the start of the projection interval
     const initialBalance = transactions
-      .filter(t => new Date(t.date) < startOfMonth(today))
+      .filter(t => isBefore(new Date(t.date), startOfMonth(today)))
       .reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
 
     const projectionInterval = {
@@ -104,20 +103,28 @@ export function FinancialProjection() {
     if (monthsToProject.length === 0) return { chartData: [], finalBalance: 0 };
     
     let accumulatedBalance = initialBalance;
+    let lastMonthFixedIncome = 0;
+    let lastMonthFixedExpense = 0;
     
-    const chartData = monthsToProject.map((monthDate, index) => {
+    const chartData = monthsToProject.map((monthDate) => {
       const monthKey = format(monthDate, 'yyyy-MM');
       const monthName = format(monthDate, 'MMM', { locale: ptBR });
       
+      const isCurrentMonthOrPast = !isBefore(endOfMonth(monthDate), today);
       const historicalData = monthlySummary.get(monthKey);
       
-      // For the first month in projection (current month), and all past months
-      if (historicalData && new Date(monthKey + '-01T00:00:00') <= endOfMonth(today)) {
-        const totalIncome = historicalData.income.fixed + historicalData.income.variable;
-        const totalExpense = historicalData.expense.fixed + historicalData.expense.variable;
-        const netChange = totalIncome - totalExpense;
-        accumulatedBalance += netChange;
+      let totalIncome, totalExpense;
+      
+      if (isCurrentMonthOrPast && historicalData) {
+        // For current and past months, use actual variable and fixed data
+        totalIncome = historicalData.income.fixed + historicalData.income.variable;
+        totalExpense = historicalData.expense.fixed + historicalData.expense.variable;
+        accumulatedBalance += totalIncome - totalExpense;
 
+        // Store the fixed values of the last real month for future projections
+        lastMonthFixedIncome = historicalData.income.fixed;
+        lastMonthFixedExpense = historicalData.expense.fixed;
+        
         return {
           month: monthName,
           receita: totalIncome,
@@ -126,19 +133,16 @@ export function FinancialProjection() {
           isProjection: false,
         };
       } else { // Future months projection
-        // Use fixed values from the last available month data for projection
-        const lastRelevantMonthKey = format(subMonths(monthDate, 1), 'yyyy-MM');
-        const lastMonthSummary = monthlySummary.get(lastRelevantMonthKey) || { income: { fixed: 0, variable: 0 }, expense: { fixed: 0, variable: 0 } };
-        
-        const baseIncome = lastMonthSummary.income.fixed;
-        const baseExpense = lastMonthSummary.expense.fixed;
+        // Project using only fixed values from the last available month
+        totalIncome = lastMonthFixedIncome;
+        totalExpense = lastMonthFixedExpense;
 
-        accumulatedBalance += baseIncome - baseExpense;
+        accumulatedBalance += totalIncome - totalExpense;
         
         return {
           month: monthName,
-          receita: baseIncome,
-          despesa: baseExpense,
+          receita: totalIncome,
+          despesa: totalExpense,
           saldo: accumulatedBalance,
           isProjection: true,
         };
@@ -146,7 +150,7 @@ export function FinancialProjection() {
     });
 
     return { chartData, finalBalance: chartData.length > 0 ? chartData[chartData.length - 1].saldo : 0 };
-  }, [projectionMonth, transactions, today]);
+}, [projectionMonth, transactions, today]);
 
 
   const { chartData, finalBalance } = processedData;
@@ -350,3 +354,5 @@ export function FinancialProjection() {
     </div>
   );
 }
+
+    
