@@ -27,36 +27,40 @@ const formSchema = z.object({
 
 type TransactionFormProps = {
   onAddTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  initialData?: Partial<Transaction>;
+  buttonText?: string;
 }
 
-export function TransactionForm({ onAddTransaction }: TransactionFormProps) {
+export function TransactionForm({ onAddTransaction, initialData, buttonText = "Adicionar Transação" }: TransactionFormProps) {
     const { toast } = useToast();
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            description: "",
-            amount: 0,
-            type: "expense",
-            category: "variable",
-            date: new Date(),
+            description: initialData?.description || "",
+            amount: initialData?.amount || 0,
+            type: initialData?.type || "expense",
+            category: initialData?.category || "variable",
+            date: initialData?.date ? new Date(initialData.date) : new Date(),
         },
     });
 
     function onSubmit(values: z.infer<typeof formSchema>) {
         const transactionData = { ...values, date: values.date.toISOString() };
         onAddTransaction(transactionData);
-        toast({
-            title: "Transação Adicionada",
-            description: `Adicionado "${values.description}" de R$${values.amount}.`,
-        });
-        form.reset({
-            description: "",
-            amount: 0,
-            type: "expense",
-            category: "variable",
-            date: new Date(),
-        });
+        if(!initialData) {
+            toast({
+                title: "Transação Adicionada",
+                description: `Adicionado "${values.description}" de ${values.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}.`,
+            });
+            form.reset({
+                description: "",
+                amount: 0,
+                type: "expense",
+                category: "variable",
+                date: new Date(),
+            });
+        }
     }
 
     return (
@@ -79,7 +83,7 @@ export function TransactionForm({ onAddTransaction }: TransactionFormProps) {
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Valor</FormLabel>
-                            <FormControl><Input type="number" placeholder="150,75" {...field} /></FormControl>
+                            <FormControl><Input type="number" step="0.01" placeholder="150,75" {...field} /></FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -160,7 +164,7 @@ export function TransactionForm({ onAddTransaction }: TransactionFormProps) {
                       render={({ field }) => (
                           <FormItem>
                               <FormLabel>Categoria</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={form.watch('type') === 'income'}>
                                   <FormControl><SelectTrigger><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger></FormControl>
                                   <SelectContent>
                                       <SelectItem value="fixed">Fixa</SelectItem>
@@ -174,7 +178,7 @@ export function TransactionForm({ onAddTransaction }: TransactionFormProps) {
                 </div>
                 
                 <Button type="submit" className="w-full">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Transação
+                    <PlusCircle className="mr-2 h-4 w-4" /> {buttonText}
                 </Button>
             </form>
         </Form>
