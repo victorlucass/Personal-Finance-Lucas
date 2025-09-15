@@ -24,6 +24,13 @@
     --input: 0 0% 89.8%;
     --ring: 210 40% 60%; /* Calm Blue */
     --radius: 0.8rem;
+
+    --chart-1: 120 25% 65.1%; /* Soft Green */
+    --chart-2: 0 84.2% 60.2%; /* Destructive Red */
+    --chart-3: 210 40% 60%; /* Calm Blue */
+    --chart-4: 30 90% 60%; /* Orange */
+    --chart-5: 270 90% 60%; /* Purple */
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 210 40% 60%;
@@ -54,6 +61,13 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 210 40% 60%;
+
+    --chart-1: 120 25% 65.1%;
+    --chart-2: 0 70% 50%;
+    --chart-3: 210 40% 60%;
+    --chart-4: 30 90% 60%;
+    --chart-5: 270 90% 60%;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 210 40% 60%;

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import { addMonths, format, getDaysInMonth, startOfMonth, eachMonthOfInterval, endOfYear, endOfMonth } from 'date-fns';
+import { addMonths, format, startOfMonth, eachMonthOfInterval, endOfYear, endOfMonth, startOfToday, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Line, ComposedChart, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import type { Transaction } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
@@ -42,7 +42,7 @@ const calculateMonthlySummary = (transactions: Transaction[]) => {
 export function FinancialProjection() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const { toast } = useToast();
-  const today = new Date();
+  const today = startOfToday();
   const futureMonths = eachMonthOfInterval({
     start: startOfMonth(today),
     end: endOfYear(addMonths(today, 12)),
@@ -72,7 +72,6 @@ export function FinancialProjection() {
         fetchTransactions();
     }
     
-    // Using a custom event to trigger refresh from other components
     window.addEventListener('transactions-updated', handleStorageChange);
 
     return () => {
@@ -82,11 +81,18 @@ export function FinancialProjection() {
   }, [toast]);
 
   const processedData = useMemo(() => {
-    const monthlySummary = calculateMonthlySummary(transactions);
-    const lastRecordedMonth = Array.from(monthlySummary.keys()).sort().pop() || format(today, 'yyyy-MM');
-    const base = monthlySummary.get(lastRecordedMonth) || { income: 0, fixed: 0, variable: 0 };
+    if (transactions.length === 0) return { chartData: [], finalBalance: 0 };
     
-    let balance = transactions.reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
+    const monthlySummary = calculateMonthlySummary(transactions);
+    
+    const allMonthKeys = Array.from(monthlySummary.keys()).sort();
+    const lastRecordedMonthKey = allMonthKeys.length > 0 ? allMonthKeys[allMonthKeys.length - 1] : format(today, 'yyyy-MM');
+    
+    const base = monthlySummary.get(lastRecordedMonthKey) || { income: 0, fixed: 0, variable: 0 };
+    
+    const initialBalance = transactions.reduce((acc, t) => {
+        return acc + (t.type === 'income' ? t.amount : -t.amount)
+    }, 0);
 
     const projectionInterval = {
       start: startOfMonth(today),
@@ -94,46 +100,62 @@ export function FinancialProjection() {
     };
 
     const monthsToProject = eachMonthOfInterval(projectionInterval);
-
-    if (monthsToProject.length === 0) return [];
-
+    if (monthsToProject.length === 0) return { chartData: [], finalBalance: 0 };
+    
+    let accumulatedBalance = initialBalance;
+    const historicalBalanceAdjustments = new Map<string, number>();
+    
+    // Pre-calculate historical balance adjustments
+    for (const key of allMonthKeys) {
+        const data = monthlySummary.get(key)!;
+        const netChange = data.income - (data.fixed + data.variable);
+        historicalBalanceAdjustments.set(key, netChange);
+    }
+    
     const chartData = monthsToProject.map(monthDate => {
       const monthKey = format(monthDate, 'yyyy-MM');
       const monthName = format(monthDate, 'MMM', { locale: ptBR });
       
       const historicalData = monthlySummary.get(monthKey);
 
-      if (historicalData) {
-        balance += historicalData.income - (historicalData.fixed + historicalData.variable);
+      if (historicalData && new Date(monthKey + '-01T00:00:00') <= today) {
+        accumulatedBalance += historicalBalanceAdjustments.get(monthKey) || 0;
         return {
           month: monthName,
           receita: historicalData.income,
           despesa: historicalData.fixed + historicalData.variable,
-          saldo: balance,
+          saldo: accumulatedBalance,
           isProjection: false,
         };
       } else {
-        balance += base.income - (base.fixed + base.variable);
+        accumulatedBalance += base.income - (base.fixed + base.variable);
         return {
           month: monthName,
           receita: base.income,
           despesa: base.fixed + base.variable,
-          saldo: balance,
+          saldo: accumulatedBalance,
           isProjection: true,
         };
       }
     });
 
-    return chartData;
+    return { chartData, finalBalance: chartData.length > 0 ? chartData[chartData.length - 1].saldo : 0 };
   }, [projectionMonth, transactions, today]);
+
+  const { chartData, finalBalance } = processedData;
 
   const dailyStatus = useMemo(() => {
     const monthlySummary = calculateMonthlySummary(transactions);
-    const lastRecordedMonth = Array.from(monthlySummary.keys()).sort().pop() || format(today, 'yyyy-MM');
-    const base = monthlySummary.get(lastRecordedMonth) || { income: 0, fixed: 0, variable: 0 };
+    const currentMonthKey = format(today, 'yyyy-MM');
+    const base = monthlySummary.get(currentMonthKey) || { income: 0, fixed: 0, variable: 0 };
 
-    const todayIncome = transactions.filter(t => format(new Date(t.date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') && t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-    const todayExpense = transactions.filter(t => format(new Date(t.date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') && t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+    const todayIncome = transactions
+        .filter(t => format(new Date(t.date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') && t.type === 'income')
+        .reduce((acc, t) => acc + t.amount, 0);
+
+    const todayExpense = transactions
+        .filter(t => format(new Date(t.date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') && t.type === 'expense')
+        .reduce((acc, t) => acc + t.amount, 0);
 
     return {
       today: {
@@ -148,12 +170,25 @@ export function FinancialProjection() {
       }
     };
   }, [transactions, today]);
-  
-  const finalBalance = processedData.length > 0 ? processedData[processedData.length - 1]?.saldo || 0 : 0;
+
+  const expenseBreakdown = useMemo(() => {
+    const currentMonthExpenses = transactions.filter(t => t.type === 'expense' && isSameMonth(new Date(t.date), today));
+    const fixed = currentMonthExpenses.filter(t => t.category === 'fixed').reduce((acc, t) => acc + t.amount, 0);
+    const variable = currentMonthExpenses.filter(t => t.category === 'variable').reduce((acc, t) => acc + t.amount, 0);
+    const total = fixed + variable;
+
+    if (total === 0) return [];
+
+    return [
+      { name: 'Fixa', value: fixed, fill: 'hsl(var(--chart-1))' },
+      { name: 'Variável', value: variable, fill: 'hsl(var(--chart-2))' },
+    ];
+  }, [transactions, today]);
 
   const chartConfig = {
-    receita: { label: "Receita", color: "hsl(var(--accent))" },
-    despesa: { label: "Despesa", color: "hsl(var(--destructive))" },
+    receita: { label: "Receita", color: "hsl(var(--chart-1))" },
+    despesa: { label: "Despesa", color: "hsl(var(--chart-2))" },
+    saldo: { label: "Saldo", color: "hsl(var(--chart-3))" },
   };
 
   return (
@@ -183,7 +218,7 @@ export function FinancialProjection() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Projeção Anual</CardTitle>
+            <CardTitle className="text-sm font-medium">Projeção Final</CardTitle>
           </CardHeader>
           <CardContent>
              <div className="text-2xl font-bold">{currencyFormatter.format(finalBalance)}</div>
@@ -214,43 +249,94 @@ export function FinancialProjection() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Projeção de Fluxo de Caixa</CardTitle>
-          <CardDescription>
-            Mostra seu saldo acumulado com base em dados históricos e projeções futuras.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
-            <BarChart data={processedData}>
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickMargin={10}
-                tickFormatter={(value) => currencyFormatter.format(value)}
-              />
-              <Tooltip
-                cursor={{ fill: 'hsl(var(--muted))' }}
-                content={<ChartTooltipContent 
-                    formatter={(value, name, props) => {
-                        const formattedValue = currencyFormatter.format(value as number);
-                        if(name === 'saldo') {
-                           return <div className="flex flex-col"><span>Saldo: {formattedValue}</span><span className={`text-xs ${props.payload.isProjection ? 'text-blue-500' : 'text-green-500'}`}>{props.payload.isProjection ? '(Projeção)' : '(Real)'}</span></div>
-                        }
-                        return `${chartConfig[name as keyof typeof chartConfig].label}: ${formattedValue}`
-                    }}
-                />}
-              />
-              <Legend />
-              <Bar dataKey="receita" fill="var(--color-receita)" radius={4} />
-              <Bar dataKey="despesa" fill="var(--color-despesa)" radius={4} />
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Card className="lg:col-span-2">
+            <CardHeader>
+            <CardTitle>Projeção de Fluxo de Caixa</CardTitle>
+            <CardDescription>
+                Mostra seu saldo acumulado com base em dados históricos e projeções futuras.
+            </CardDescription>
+            </CardHeader>
+            <CardContent>
+            <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
+                <ComposedChart data={chartData}>
+                <CartesianGrid vertical={false} />
+                <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} />
+                <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={10}
+                    tickFormatter={(value) => currencyFormatter.format(value)}
+                />
+                <Tooltip
+                    cursor={{ fill: 'hsl(var(--muted))' }}
+                    content={<ChartTooltipContent 
+                        formatter={(value, name) => {
+                            const formattedValue = currencyFormatter.format(value as number);
+                            const label = chartConfig[name as keyof typeof chartConfig]?.label || name;
+                            return `${label}: ${formattedValue}`;
+                        }}
+                    />}
+                />
+                <Legend />
+                <Bar dataKey="receita" fill="var(--color-receita)" radius={4} name="Receita" />
+                <Bar dataKey="despesa" fill="var(--color-despesa)" radius={4} name="Despesa" />
+                <Line type="monotone" dataKey="saldo" strokeWidth={2} stroke="var(--color-saldo)" dot={false} name="Saldo" />
+                </ComposedChart>
+            </ChartContainer>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle>Distribuição de Despesas</CardTitle>
+                <CardDescription>Despesas fixas vs. variáveis no mês atual.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
+                  {expenseBreakdown.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={400}>
+                        <PieChart>
+                        <Tooltip
+                            content={<ChartTooltipContent
+                                formatter={(value, name) => `${name}: ${currencyFormatter.format(value as number)}`}
+                                nameKey="name"
+                            />}
+                        />
+                        <Pie
+                            data={expenseBreakdown}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={120}
+                            labelLine={false}
+                            label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                                const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                                const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                                const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                                return (
+                                <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
+                                    {`${(percent * 100).toFixed(0)}%`}
+                                </text>
+                                );
+                            }}
+                        >
+                            {expenseBreakdown.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                        </Pie>
+                        <Legend />
+                        </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                        Nenhuma despesa este mês.
+                    </div>
+                  )}
+                </ChartContainer>
+            </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
