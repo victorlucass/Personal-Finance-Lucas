@@ -11,7 +11,7 @@ export async function runEndOfYearProjection(input: EndOfYearProjectionInput) {
     return { success: true, data: result };
   } catch (error) {
     console.error(error);
-    return { success: false, error: "Failed to generate projection." };
+    return { success: false, error: "Falha ao gerar projeção." };
   }
 }
 
@@ -21,6 +21,6 @@ export async function runCreditCardAnalysis(input: AnalyzeCreditCardStatementInp
     return { success: true, data: result };
   } catch (error) {
     console.error(error);
-    return { success: false, error: "Failed to analyze statement." };
+    return { success: false, error: "Falha ao analisar a fatura." };
   }
 }

@@ -11,7 +11,7 @@ type Props = {
 
 export function FinancialChart({ data }: Props) {
   const chartData = data.reduce((acc, transaction) => {
-    const month = new Date(transaction.date).toLocaleString('default', { month: 'short' });
+    const month = new Date(transaction.date).toLocaleString('pt-BR', { month: 'short' });
     let monthData = acc.find(d => d.month === month);
     if (!monthData) {
       monthData = { month, income: 0, expenses: 0 };
@@ -27,11 +27,11 @@ export function FinancialChart({ data }: Props) {
 
   const chartConfig = {
     income: {
-      label: "Income",
+      label: "Receita",
       color: "hsl(var(--accent))",
     },
     expenses: {
-      label: "Expenses",
+      label: "Despesas",
       color: "hsl(var(--destructive))",
     },
   };
@@ -39,8 +39,8 @@ export function FinancialChart({ data }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Income vs. Expenses</CardTitle>
-        <CardDescription>A summary of your cash flow for the month.</CardDescription>
+        <CardTitle>Receita vs. Despesas</CardTitle>
+        <CardDescription>Um resumo do seu fluxo de caixa para o mês.</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
@@ -56,9 +56,12 @@ export function FinancialChart({ data }: Props) {
                 tickLine={false}
                 axisLine={false}
                 tickMargin={10}
-                tickFormatter={(value) => `$${value}`}
+                tickFormatter={(value) => `R$${value}`}
               />
-            <Tooltip content={<ChartTooltipContent />} />
+            <Tooltip 
+              content={<ChartTooltipContent />} 
+              formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
+            />
             <Legend />
             <Bar dataKey="income" fill="var(--color-income)" radius={4} />
             <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} />

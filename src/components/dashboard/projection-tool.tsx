@@ -13,9 +13,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Wand2 } from "lucide-react";
 
 const formSchema = z.object({
-  salary: z.coerce.number().min(0, "Salary must be a positive number."),
-  fixedExpenses: z.coerce.number().min(0, "Expenses must be a positive number."),
-  pastSpendingHabits: z.string().min(10, "Please provide more details on your spending habits."),
+  salary: z.coerce.number().min(0, "O salário deve ser um número positivo."),
+  fixedExpenses: z.coerce.number().min(0, "As despesas devem ser um número positivo."),
+  pastSpendingHabits: z.string().min(10, "Forneça mais detalhes sobre seus hábitos de consumo."),
 });
 
 type Props = {
@@ -46,7 +46,7 @@ export function ProjectionTool({ pastSpendingHabits }: Props) {
     if (result.success && result.data) {
       setProjection(result.data.projection);
     } else {
-      setError(result.error || "An unknown error occurred.");
+      setError(result.error || "Ocorreu um erro desconhecido.");
     }
     setLoading(false);
   }
@@ -54,9 +54,9 @@ export function ProjectionTool({ pastSpendingHabits }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>End-of-Year Projection</CardTitle>
+        <CardTitle>Projeção de Fim de Ano</CardTitle>
         <CardDescription>
-          Forecast your financial standing by the end of the year based on your current habits.
+          Preveja sua situação financeira até o final do ano com base em seus hábitos atuais.
         </CardDescription>
       </CardHeader>
       <Form {...form}>
@@ -68,7 +68,7 @@ export function ProjectionTool({ pastSpendingHabits }: Props) {
                   name="salary"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Monthly Salary</FormLabel>
+                      <FormLabel>Salário Mensal</FormLabel>
                       <FormControl>
                         <Input type="number" placeholder="5000" {...field} />
                       </FormControl>
@@ -81,7 +81,7 @@ export function ProjectionTool({ pastSpendingHabits }: Props) {
                   name="fixedExpenses"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Monthly Fixed Expenses</FormLabel>
+                      <FormLabel>Despesas Fixas Mensais</FormLabel>
                       <FormControl>
                         <Input type="number" placeholder="1500" {...field} />
                       </FormControl>
@@ -94,9 +94,9 @@ export function ProjectionTool({ pastSpendingHabits }: Props) {
                   name="pastSpendingHabits"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Spending Habits Summary</FormLabel>
+                      <FormLabel>Resumo dos Hábitos de Consumo</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="e.g., Groceries: $400, Dining out: $200..." {...field} rows={6} />
+                        <Textarea placeholder="ex: Supermercado: R$400, Restaurantes: R$200..." {...field} rows={6} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -104,12 +104,12 @@ export function ProjectionTool({ pastSpendingHabits }: Props) {
                 />
             </div>
             <div className="rounded-lg border bg-muted/50 p-6 flex flex-col">
-              <h3 className="text-lg font-semibold mb-2">Your Projection</h3>
+              <h3 className="text-lg font-semibold mb-2">Sua Projeção</h3>
               {loading && (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <p className="text-sm text-muted-foreground">Gazing into your financial future...</p>
+                    <p className="text-sm text-muted-foreground">Analisando seu futuro financeiro...</p>
                   </div>
                 </div>
               )}
@@ -122,7 +122,7 @@ export function ProjectionTool({ pastSpendingHabits }: Props) {
               {!loading && !projection && !error && (
                 <div className="flex-1 flex flex-col items-center justify-center text-center">
                   <Wand2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                  <p className="text-sm text-muted-foreground">Your end-of-year forecast will appear here.</p>
+                  <p className="text-sm text-muted-foreground">Sua previsão de fim de ano aparecerá aqui.</p>
                 </div>
               )}
             </div>
@@ -132,12 +132,12 @@ export function ProjectionTool({ pastSpendingHabits }: Props) {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating...
+                  Gerando...
                 </>
               ) : (
                 <>
                   <Wand2 className="mr-2 h-4 w-4" />
-                  Generate Projection
+                  Gerar Projeção
                 </>
               )}
             </Button>

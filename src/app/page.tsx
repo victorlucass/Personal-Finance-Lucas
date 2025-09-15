@@ -17,14 +17,14 @@ export default function DashboardPage() {
 
   const monthlySpendingHabits = mockTransactions
     .filter((t) => t.type === 'expense')
-    .map((t) => `- ${t.description}: $${t.amount.toFixed(2)}`)
+    .map((t) => `- ${t.description}: R$${t.amount.toFixed(2)}`)
     .join('\n');
 
   return (
     <div className="flex flex-col gap-8 p-4 md:p-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, here's your financial overview.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Painel</h1>
+        <p className="text-muted-foreground">Bem-vindo de volta, aqui está sua visão geral financeira.</p>
       </header>
 
       <FinancialOverview

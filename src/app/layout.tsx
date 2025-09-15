@@ -5,8 +5,8 @@ import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "Personal Finance Gazer",
-  description: "Your personal finance companion",
+  title: "Observador de Finanças Pessoais",
+  description: "Seu companheiro de finanças pessoais",
 };
 
 export default function RootLayout({
@@ -15,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />

@@ -9,25 +9,25 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { CreditCardTransaction } from "@/lib/types";
 
-const currencyFormatter = new Intl.NumberFormat('en-US', {
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
-  currency: 'USD',
+  currency: 'BRL',
 });
 
 export function SpendingList({ transactions }: { transactions: CreditCardTransaction[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Extracted Spending</CardTitle>
+        <CardTitle>Gastos Extraídos</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="border rounded-md">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Store Name</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead>Nome da Loja</TableHead>
+                <TableHead>Descrição</TableHead>
+                <TableHead className="text-right">Valor</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -42,7 +42,7 @@ export function SpendingList({ transactions }: { transactions: CreditCardTransac
               ) : (
                 <TableRow>
                     <TableCell colSpan={3} className="h-24 text-center">
-                        No transactions were found in this statement.
+                        Nenhuma transação foi encontrada nesta fatura.
                     </TableCell>
                 </TableRow>
               )}

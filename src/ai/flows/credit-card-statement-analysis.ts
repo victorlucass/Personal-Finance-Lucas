@@ -1,10 +1,10 @@
 'use server';
 /**
- * @fileOverview Credit card statement analysis AI agent.
+ * @fileOverview Agente de IA para análise de extrato de cartão de crédito.
  *
- * - analyzeCreditCardStatement - A function that handles the credit card statement analysis process.
- * - AnalyzeCreditCardStatementInput - The input type for the analyzeCreditCardStatement function.
- * - AnalyzeCreditCardStatementOutput - The return type for the analyzeCreditCardStatement function.
+ * - analyzeCreditCardStatement - Uma função que lida com o processo de análise de extrato de cartão de crédito.
+ * - AnalyzeCreditCardStatementInput - O tipo de entrada para a função analyzeCreditCardStatement.
+ * - AnalyzeCreditCardStatementOutput - O tipo de retorno para a função analyzeCreditCardStatement.
  */
 
 import {ai} from '@/ai/genkit';
@@ -14,7 +14,7 @@ const AnalyzeCreditCardStatementInputSchema = z.object({
   statementDataUri: z
     .string()
     .describe(
-      "A credit card statement, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "Um extrato de cartão de crédito, como um URI de dados que deve incluir um tipo MIME e usar codificação Base64. Formato esperado: 'data:<mimetype>;base64,<dados_codificados>'."
     ),
 });
 export type AnalyzeCreditCardStatementInput = z.infer<typeof AnalyzeCreditCardStatementInputSchema>;
@@ -22,11 +22,11 @@ export type AnalyzeCreditCardStatementInput = z.infer<typeof AnalyzeCreditCardSt
 const AnalyzeCreditCardStatementOutputSchema = z.object({
   transactions: z.array(
     z.object({
-      storeName: z.string().describe('The name of the store where the transaction occurred.'),
-      amount: z.number().describe('The amount of the transaction.'),
-      description: z.string().describe('A description of the transaction.'),
+      storeName: z.string().describe('O nome da loja onde a transação ocorreu.'),
+      amount: z.number().describe('O valor da transação.'),
+      description: z.string().describe('Uma descrição da transação.'),
     })
-  ).describe('A list of transactions extracted from the credit card statement.'),
+  ).describe('Uma lista de transações extraídas do extrato do cartão de crédito.'),
 });
 export type AnalyzeCreditCardStatementOutput = z.infer<typeof AnalyzeCreditCardStatementOutputSchema>;
 
@@ -38,11 +38,11 @@ const prompt = ai.definePrompt({
   name: 'analyzeCreditCardStatementPrompt',
   input: {schema: AnalyzeCreditCardStatementInputSchema},
   output: {schema: AnalyzeCreditCardStatementOutputSchema},
-  prompt: `You are an expert financial analyst specializing in credit card statement analysis.
+  prompt: `Você é um analista financeiro especialista em análise de extratos de cartão de crédito.
 
-You will extract transaction details from the credit card statement, including store name, amount, and description, and categorize the spending.
+Você extrairá os detalhes da transação do extrato do cartão de crédito, incluindo nome da loja, valor e descrição, e categorizará os gastos.
 
-Analyze the following credit card statement:
+Analise o seguinte extrato de cartão de crédito:
 
 {{media url=statementDataUri}}`,
 });

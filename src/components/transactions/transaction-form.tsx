@@ -13,11 +13,12 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  description: z.string().min(2, "Description is too short."),
-  amount: z.coerce.number().positive("Amount must be positive."),
+  description: z.string().min(2, "A descrição é muito curta."),
+  amount: z.coerce.number().positive("O valor deve ser positivo."),
   type: z.enum(["income", "expense"]),
   category: z.enum(["fixed", "variable"]),
   date: z.date(),
@@ -39,8 +40,8 @@ export function TransactionForm() {
     function onSubmit(values: z.infer<typeof formSchema>) {
         console.log(values);
         toast({
-            title: "Transaction Added",
-            description: `Added "${values.description}" for $${values.amount}.`,
+            title: "Transação Adicionada",
+            description: `Adicionado "${values.description}" de R$${values.amount}.`,
         });
         form.reset();
     }
@@ -53,8 +54,8 @@ export function TransactionForm() {
                     name="description"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl><Input placeholder="e.g., Groceries" {...field} /></FormControl>
+                            <FormLabel>Descrição</FormLabel>
+                            <FormControl><Input placeholder="ex: Supermercado" {...field} /></FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -64,8 +65,8 @@ export function TransactionForm() {
                     name="amount"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Amount</FormLabel>
-                            <FormControl><Input type="number" placeholder="150.75" {...field} /></FormControl>
+                            <FormLabel>Valor</FormLabel>
+                            <FormControl><Input type="number" placeholder="150,75" {...field} /></FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -75,7 +76,7 @@ export function TransactionForm() {
                   name="date"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Transaction Date</FormLabel>
+                      <FormLabel>Data da Transação</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -87,9 +88,9 @@ export function TransactionForm() {
                               )}
                             >
                               {field.value ? (
-                                format(field.value, "PPP")
+                                format(field.value, "PPP", { locale: ptBR })
                               ) : (
-                                <span>Pick a date</span>
+                                <span>Escolha uma data</span>
                               )}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
@@ -104,6 +105,7 @@ export function TransactionForm() {
                               date > new Date() || date < new Date("1900-01-01")
                             }
                             initialFocus
+                            locale={ptBR}
                           />
                         </PopoverContent>
                       </Popover>
@@ -118,7 +120,7 @@ export function TransactionForm() {
                       name="type"
                       render={({ field }) => (
                           <FormItem className="space-y-3">
-                              <FormLabel>Type</FormLabel>
+                              <FormLabel>Tipo</FormLabel>
                               <FormControl>
                                   <RadioGroup
                                       onValueChange={field.onChange}
@@ -127,11 +129,11 @@ export function TransactionForm() {
                                   >
                                       <FormItem className="flex items-center space-x-2 space-y-0">
                                           <FormControl><RadioGroupItem value="income" /></FormControl>
-                                          <FormLabel className="font-normal">Income</FormLabel>
+                                          <FormLabel className="font-normal">Receita</FormLabel>
                                       </FormItem>
                                       <FormItem className="flex items-center space-x-2 space-y-0">
                                           <FormControl><RadioGroupItem value="expense" /></FormControl>
-                                          <FormLabel className="font-normal">Expense</FormLabel>
+                                          <FormLabel className="font-normal">Despesa</FormLabel>
                                       </FormItem>
                                   </RadioGroup>
                               </FormControl>
@@ -144,12 +146,12 @@ export function TransactionForm() {
                       name="category"
                       render={({ field }) => (
                           <FormItem>
-                              <FormLabel>Category</FormLabel>
+                              <FormLabel>Categoria</FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <FormControl><SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger></FormControl>
+                                  <FormControl><SelectTrigger><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger></FormControl>
                                   <SelectContent>
-                                      <SelectItem value="fixed">Fixed</SelectItem>
-                                      <SelectItem value="variable">Variable</SelectItem>
+                                      <SelectItem value="fixed">Fixa</SelectItem>
+                                      <SelectItem value="variable">Variável</SelectItem>
                                   </SelectContent>
                               </Select>
                               <FormMessage />
@@ -159,10 +161,10 @@ export function TransactionForm() {
                 </div>
                 
                 <Button type="submit" className="w-full">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Transaction
+                    <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Transação
                 </Button>
                 <FormDescription className="text-center text-xs">
-                    This is a demo. Transactions will not be saved.
+                    Isso é uma demonstração. As transações não serão salvas.
                 </FormDescription>
             </form>
         </Form>

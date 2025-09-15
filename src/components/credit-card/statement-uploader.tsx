@@ -34,12 +34,12 @@ export function StatementUploader() {
       if (result.success && result.data) {
         setTransactions(result.data.transactions);
       } else {
-        setError(result.error || "Failed to analyze the statement. Please try a different file.");
+        setError(result.error || "Falha ao analisar a fatura. Por favor, tente um arquivo diferente.");
       }
       setLoading(false);
     };
     reader.onerror = () => {
-      setError("Failed to read the file.");
+      setError("Falha ao ler o arquivo.");
       setLoading(false);
     };
   };
@@ -48,9 +48,9 @@ export function StatementUploader() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Upload Statement</CardTitle>
+          <CardTitle>Enviar Fatura</CardTitle>
           <CardDescription>
-            Upload your credit card statement (PDF) to automatically extract spending details. Your data is processed securely.
+            Envie sua fatura do cartão de crédito (PDF) para extrair automaticamente os detalhes dos gastos. Seus dados são processados com segurança.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -66,7 +66,7 @@ export function StatementUploader() {
             />
             <Button onClick={() => fileInputRef.current?.click()} disabled={loading}>
               <Upload className="mr-2 h-4 w-4" />
-              Choose File
+              Escolher Arquivo
             </Button>
             {fileName && <span className="text-sm text-muted-foreground">{fileName}</span>}
             {loading && <Loader2 className="h-5 w-5 animate-spin" />}
@@ -79,7 +79,7 @@ export function StatementUploader() {
           <CardHeader className="flex-row gap-4 items-center">
              <FileWarning className="h-6 w-6 text-destructive" />
              <div>
-                <CardTitle className="text-destructive">Analysis Failed</CardTitle>
+                <CardTitle className="text-destructive">Análise Falhou</CardTitle>
                 <CardDescription className="text-destructive/80">{error}</CardDescription>
              </div>
           </CardHeader>

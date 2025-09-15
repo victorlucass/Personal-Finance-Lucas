@@ -22,9 +22,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/transactions", label: "Transactions", icon: ArrowRightLeft },
-  { href: "/credit-card", label: "Credit Card", icon: CreditCard },
+  { href: "/", label: "Painel", icon: LayoutDashboard },
+  { href: "/transactions", label: "Transações", icon: ArrowRightLeft },
+  { href: "/credit-card", label: "Cartão de Crédito", icon: CreditCard },
 ];
 
 export function SidebarNav() {
@@ -80,10 +80,10 @@ export function SidebarNav() {
           {state === "expanded" && (
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-sidebar-foreground">
-                User
+                Usuário
               </span>
               <span className="text-xs text-sidebar-foreground/70">
-                user@email.com
+                usuario@email.com
               </span>
             </div>
           )}

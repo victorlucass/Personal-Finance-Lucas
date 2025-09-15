@@ -10,18 +10,18 @@ import { DollarSign, ShoppingCart } from "lucide-react";
 import { Transaction } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const currencyFormatter = new Intl.NumberFormat('en-US', {
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
-  currency: 'USD',
+  currency: 'BRL',
 });
 
 export function RecentTransactions({ transactions }: { transactions: Transaction[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Transactions</CardTitle>
+        <CardTitle>Transações Recentes</CardTitle>
         <CardDescription>
-          Your last {transactions.length} transactions.
+          Suas últimas {transactions.length} transações.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -36,7 +36,7 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
             </Avatar>
             <div className="ml-4 space-y-1">
               <p className="text-sm font-medium leading-none">{transaction.description}</p>
-              <p className="text-sm text-muted-foreground">{new Date(transaction.date).toLocaleDateString()}</p>
+              <p className="text-sm text-muted-foreground">{new Date(transaction.date).toLocaleDateString('pt-BR')}</p>
             </div>
             <div className={cn(
               "ml-auto font-medium",

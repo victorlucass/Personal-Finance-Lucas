@@ -7,8 +7,8 @@ export default function TransactionsPage() {
   return (
     <div className="p-4 md:p-8 space-y-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
-        <p className="text-muted-foreground">Manage your income and expenses.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Transações</h1>
+        <p className="text-muted-foreground">Gerencie suas receitas e despesas.</p>
       </header>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -18,7 +18,7 @@ export default function TransactionsPage() {
         <div>
           <Card>
             <CardHeader>
-                <CardTitle>Add New Transaction</CardTitle>
+                <CardTitle>Adicionar Nova Transação</CardTitle>
             </CardHeader>
             <CardContent>
               <TransactionForm />
