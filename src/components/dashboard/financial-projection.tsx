@@ -86,17 +86,16 @@ export function FinancialProjection() {
 
   const processedData = useMemo(() => {
     if (transactions.length === 0) return { chartData: [], finalBalance: 0 };
-    
-    const monthlySummary = calculateMonthlySummary(transactions);
 
-    // Calculate balance from all transactions before the start of the projection interval
+    const monthlySummary = calculateMonthlySummary(transactions);
+    
     const initialBalance = transactions
-      .filter(t => isBefore(new Date(t.date), startOfMonth(today)))
-      .reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
+        .filter(t => isBefore(new Date(t.date), startOfMonth(today)))
+        .reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
 
     const projectionInterval = {
-      start: startOfMonth(today),
-      end: new Date(projectionMonth),
+        start: startOfMonth(today),
+        end: new Date(projectionMonth),
     };
 
     const monthsToProject = eachMonthOfInterval(projectionInterval);
@@ -106,50 +105,63 @@ export function FinancialProjection() {
     let lastMonthFixedIncome = 0;
     let lastMonthFixedExpense = 0;
     
-    const chartData = monthsToProject.map((monthDate) => {
-      const monthKey = format(monthDate, 'yyyy-MM');
-      const monthName = format(monthDate, 'MMM', { locale: ptBR });
-      
-      const isCurrentMonthOrPast = !isBefore(endOfMonth(monthDate), today);
-      const historicalData = monthlySummary.get(monthKey);
-      
-      let totalIncome, totalExpense;
-      
-      if (isCurrentMonthOrPast && historicalData) {
-        // For current and past months, use actual variable and fixed data
-        totalIncome = historicalData.income.fixed + historicalData.income.variable;
-        totalExpense = historicalData.expense.fixed + historicalData.expense.variable;
-        accumulatedBalance += totalIncome - totalExpense;
-
-        // Store the fixed values of the last real month for future projections
-        lastMonthFixedIncome = historicalData.income.fixed;
-        lastMonthFixedExpense = historicalData.expense.fixed;
-        
-        return {
-          month: monthName,
-          receita: totalIncome,
-          despesa: totalExpense,
-          saldo: accumulatedBalance,
-          isProjection: false,
-        };
-      } else { // Future months projection
-        // Project using only fixed values from the last available month
-        totalIncome = lastMonthFixedIncome;
-        totalExpense = lastMonthFixedExpense;
-
-        accumulatedBalance += totalIncome - totalExpense;
-        
-        return {
-          month: monthName,
-          receita: totalIncome,
-          despesa: totalExpense,
-          saldo: accumulatedBalance,
-          isProjection: true,
-        };
-      }
+    // Find the last month with actual data to get fixed values for projection
+    const allMonthKeys = Array.from(monthlySummary.keys()).sort().reverse();
+    const lastRealMonthKey = allMonthKeys.find(key => {
+        const monthDate = new Date(`${key}-01T12:00:00`);
+        return !isBefore(endOfMonth(monthDate), today);
     });
 
-    return { chartData, finalBalance: chartData.length > 0 ? chartData[chartData.length - 1].saldo : 0 };
+    if (lastRealMonthKey) {
+        const lastRealMonthData = monthlySummary.get(lastRealMonthKey);
+        if (lastRealMonthData) {
+            lastMonthFixedIncome = lastRealMonthData.income.fixed;
+            lastMonthFixedExpense = lastRealMonthData.expense.fixed;
+        }
+    }
+
+
+    const chartData = monthsToProject.map((monthDate) => {
+        const monthKey = format(monthDate, 'yyyy-MM');
+        const monthName = format(monthDate, 'MMM', { locale: ptBR });
+        
+        const historicalData = monthlySummary.get(monthKey);
+        
+        let totalIncome, totalExpense;
+        let isProjection = true;
+        
+        if (historicalData) {
+            // Use actual data if it exists for the month
+            totalIncome = historicalData.income.fixed + historicalData.income.variable;
+            totalExpense = historicalData.expense.fixed + historicalData.expense.variable;
+            isProjection = false; // This is a real month's data
+
+            // Update fixed values from the latest real month's data
+            lastMonthFixedIncome = historicalData.income.fixed;
+            lastMonthFixedExpense = historicalData.expense.fixed;
+
+        } else { // Future months projection
+            // Project using only fixed values from the last known real month
+            totalIncome = lastMonthFixedIncome;
+            totalExpense = lastMonthFixedExpense;
+        }
+        
+        const monthBalance = totalIncome - totalExpense;
+        accumulatedBalance += monthBalance;
+        
+        return {
+            month: monthName,
+            receita: totalIncome,
+            despesa: totalExpense,
+            saldoMensal: monthBalance, // Monthly balance for the bar
+            saldoAcumulado: accumulatedBalance, // Accumulated balance for the line
+            isProjection,
+        };
+    });
+
+    const finalBalance = chartData.length > 0 ? chartData[chartData.length - 1].saldoAcumulado : 0;
+
+    return { chartData, finalBalance };
 }, [projectionMonth, transactions, today]);
 
 
@@ -200,9 +212,9 @@ export function FinancialProjection() {
   }, [transactions, today]);
 
   const chartConfig = {
-    receita: { label: "Receita", color: "hsl(var(--chart-1))" },
+    saldoMensal: { label: "Saldo do Mês", color: "hsl(var(--chart-1))" },
     despesa: { label: "Despesa", color: "hsl(var(--chart-2))" },
-    saldo: { label: "Saldo", color: "hsl(var(--chart-3))" },
+    saldoAcumulado: { label: "Saldo Acumulado", color: "hsl(var(--chart-3))" },
   };
 
   return (
@@ -293,9 +305,9 @@ export function FinancialProjection() {
                     />}
                 />
                 <Legend />
-                <Bar dataKey="receita" fill="var(--color-receita)" radius={4} name="Receita" />
+                <Bar dataKey="saldoMensal" fill="var(--color-saldoMensal)" radius={4} name="Saldo do Mês" />
                 <Bar dataKey="despesa" fill="var(--color-despesa)" radius={4} name="Despesa" />
-                <Line type="monotone" dataKey="saldo" strokeWidth={2} stroke="var(--color-saldo)" dot={false} name="Saldo" />
+                <Line type="monotone" dataKey="saldoAcumulado" strokeWidth={2} stroke="var(--color-saldoAcumulado)" dot={false} name="Saldo Acumulado" />
                 </ComposedChart>
             </ChartContainer>
             </CardContent>
@@ -354,5 +366,3 @@ export function FinancialProjection() {
     </div>
   );
 }
-
-    
