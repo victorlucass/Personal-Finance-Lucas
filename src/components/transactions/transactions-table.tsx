@@ -111,7 +111,7 @@ export function TransactionsTable({ transactions, onEdit, onDelete, onClearAll }
                       <Badge variant="outline" className={cn(t.type === 'income' ? 'border-accent text-accent-foreground' : 'border-destructive/80 text-destructive')}>{typeTranslations[t.type]}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{t.type === 'expense' ? categoryTranslations[t.category] : '-'}</Badge>
+                      <Badge variant="secondary">{categoryTranslations[t.category]}</Badge>
                     </TableCell>
                     <TableCell className={cn("text-right font-mono", t.type === 'income' ? 'text-accent-foreground' : 'text-destructive')}>
                       {t.type === 'income' ? '+' : '-'}{currencyFormatter.format(t.amount)}

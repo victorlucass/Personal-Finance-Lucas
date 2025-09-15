@@ -85,7 +85,7 @@ export function TransactionForm({ onAddTransaction, initialData, buttonText = "A
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Descrição</FormLabel>
-                            <FormControl><Input placeholder="ex: Supermercado" {...field} /></FormControl>
+                            <FormControl><Input placeholder="ex: Salário" {...field} /></FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -96,7 +96,7 @@ export function TransactionForm({ onAddTransaction, initialData, buttonText = "A
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Valor</FormLabel>
-                            <FormControl><Input type="number" step="0.01" placeholder="150,75" {...field} /></FormControl>
+                            <FormControl><Input type="number" step="0.01" placeholder="1500,00" {...field} /></FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -259,7 +259,7 @@ export function TransactionForm({ onAddTransaction, initialData, buttonText = "A
                       render={({ field }) => (
                           <FormItem>
                               <FormLabel>Categoria</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={form.watch('type') === 'income'}>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
                                   <FormControl><SelectTrigger><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger></FormControl>
                                   <SelectContent>
                                       <SelectItem value="fixed">Fixa</SelectItem>

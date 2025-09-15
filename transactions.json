@@ -1,1 +1,57 @@
-[]
+[
+  {
+    "description": "Saldo atual",
+    "amount": 1343.05,
+    "type": "income",
+    "category": "variable",
+    "date": "2025-09-15T04:00:00.000Z",
+    "paymentDate": "2025-09-15T04:00:00.000Z",
+    "id": "1757979048437"
+  },
+  {
+    "description": "Fatura Nubank - Setembro",
+    "amount": 912.37,
+    "type": "expense",
+    "category": "variable",
+    "date": "2025-09-15T23:30:48.254Z",
+    "id": "1757979075517",
+    "dueDate": "2025-09-21T04:00:00.000Z"
+  },
+  {
+    "description": "Fatura Nubank PJ - Setembro\t",
+    "amount": 1930.51,
+    "type": "expense",
+    "category": "variable",
+    "date": "2025-09-15T23:31:15.319Z",
+    "dueDate": "2025-09-21T04:00:00.000Z",
+    "id": "1757979108833"
+  },
+  {
+    "description": "Salário Mensal",
+    "amount": 6500,
+    "type": "income",
+    "category": "variable",
+    "date": "2025-09-15T23:31:48.371Z",
+    "paymentDate": "2025-10-10T04:00:00.000Z",
+    "id": "1757979139286"
+  },
+  {
+    "description": "Sólides - Salário",
+    "amount": 500,
+    "type": "income",
+    "category": "fixed",
+    "date": "2025-09-15T23:32:18.786Z",
+    "dueDate": "2025-10-15T04:00:00.000Z",
+    "id": "1757979161409",
+    "paymentDate": "2025-10-15T04:00:00.000Z"
+  },
+  {
+    "description": "Compartilhamento de Conta",
+    "amount": 170,
+    "type": "income",
+    "category": "variable",
+    "date": "2025-09-15T23:32:40.891Z",
+    "paymentDate": "2025-10-10T04:00:00.000Z",
+    "id": "1757979232442"
+  }
+]

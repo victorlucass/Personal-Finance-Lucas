@@ -16,23 +16,27 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 });
 
 const calculateMonthlySummary = (transactions: Transaction[]) => {
-  const monthlySummary = new Map<string, { income: number; fixed: number; variable: number }>();
+  const monthlySummary = new Map<string, { income: { fixed: number, variable: number }, expense: { fixed: number; variable: number } }>();
 
   transactions.forEach(t => {
     const monthKey = format(new Date(t.date), 'yyyy-MM');
     if (!monthlySummary.has(monthKey)) {
-      monthlySummary.set(monthKey, { income: 0, fixed: 0, variable: 0 });
+      monthlySummary.set(monthKey, { income: { fixed: 0, variable: 0 }, expense: { fixed: 0, variable: 0 } });
     }
     const summary = monthlySummary.get(monthKey)!;
 
     if (t.type === 'income') {
-      summary.income += t.amount;
-    } else {
-      if (t.category === 'fixed') {
-        summary.fixed += t.amount;
-      } else {
-        summary.variable += t.amount;
-      }
+        if (t.category === 'fixed') {
+            summary.income.fixed += t.amount;
+        } else {
+            summary.income.variable += t.amount;
+        }
+    } else { // expense
+        if (t.category === 'fixed') {
+            summary.expense.fixed += t.amount;
+        } else {
+            summary.expense.variable += t.amount;
+        }
     }
   });
 
@@ -88,8 +92,11 @@ export function FinancialProjection() {
     const allMonthKeys = Array.from(monthlySummary.keys()).sort();
     const lastRecordedMonthKey = allMonthKeys.length > 0 ? allMonthKeys[allMonthKeys.length - 1] : format(today, 'yyyy-MM');
     
-    const base = monthlySummary.get(lastRecordedMonthKey) || { income: 0, fixed: 0, variable: 0 };
+    const lastMonthSummary = monthlySummary.get(lastRecordedMonthKey) || { income: { fixed: 0, variable: 0 }, expense: { fixed: 0, variable: 0 } };
     
+    const baseIncome = lastMonthSummary.income.fixed + lastMonthSummary.income.variable;
+    const baseExpense = lastMonthSummary.expense.fixed + lastMonthSummary.expense.variable;
+
     const initialBalance = transactions.reduce((acc, t) => {
         return acc + (t.type === 'income' ? t.amount : -t.amount)
     }, 0);
@@ -105,10 +112,11 @@ export function FinancialProjection() {
     let accumulatedBalance = initialBalance;
     const historicalBalanceAdjustments = new Map<string, number>();
     
-    // Pre-calculate historical balance adjustments
     for (const key of allMonthKeys) {
         const data = monthlySummary.get(key)!;
-        const netChange = data.income - (data.fixed + data.variable);
+        const totalIncome = data.income.fixed + data.income.variable;
+        const totalExpense = data.expense.fixed + data.expense.variable;
+        const netChange = totalIncome - totalExpense;
         historicalBalanceAdjustments.set(key, netChange);
     }
     
@@ -120,19 +128,21 @@ export function FinancialProjection() {
 
       if (historicalData && new Date(monthKey + '-01T00:00:00') <= today) {
         accumulatedBalance += historicalBalanceAdjustments.get(monthKey) || 0;
+        const totalIncome = historicalData.income.fixed + historicalData.income.variable;
+        const totalExpense = historicalData.expense.fixed + historicalData.expense.variable;
         return {
           month: monthName,
-          receita: historicalData.income,
-          despesa: historicalData.fixed + historicalData.variable,
+          receita: totalIncome,
+          despesa: totalExpense,
           saldo: accumulatedBalance,
           isProjection: false,
         };
       } else {
-        accumulatedBalance += base.income - (base.fixed + base.variable);
+        accumulatedBalance += baseIncome - baseExpense;
         return {
           month: monthName,
-          receita: base.income,
-          despesa: base.fixed + base.variable,
+          receita: baseIncome,
+          despesa: baseExpense,
           saldo: accumulatedBalance,
           isProjection: true,
         };
@@ -147,7 +157,7 @@ export function FinancialProjection() {
   const dailyStatus = useMemo(() => {
     const monthlySummary = calculateMonthlySummary(transactions);
     const currentMonthKey = format(today, 'yyyy-MM');
-    const base = monthlySummary.get(currentMonthKey) || { income: 0, fixed: 0, variable: 0 };
+    const currentMonthData = monthlySummary.get(currentMonthKey) || { income: { fixed: 0, variable: 0 }, expense: { fixed: 0, variable: 0 } };
 
     const todayIncome = transactions
         .filter(t => format(new Date(t.date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') && t.type === 'income')
@@ -157,6 +167,9 @@ export function FinancialProjection() {
         .filter(t => format(new Date(t.date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') && t.type === 'expense')
         .reduce((acc, t) => acc + t.amount, 0);
 
+    const endOfMonthIncome = currentMonthData.income.fixed + currentMonthData.income.variable;
+    const endOfMonthExpense = currentMonthData.expense.fixed + currentMonthData.expense.variable;
+
     return {
       today: {
         income: todayIncome,
@@ -164,9 +177,9 @@ export function FinancialProjection() {
         balance: todayIncome - todayExpense,
       },
       endOfMonth: {
-        income: base.income,
-        expense: base.fixed + base.variable,
-        balance: base.income - (base.fixed + base.variable),
+        income: endOfMonthIncome,
+        expense: endOfMonthExpense,
+        balance: endOfMonthIncome - endOfMonthExpense,
       }
     };
   }, [transactions, today]);
