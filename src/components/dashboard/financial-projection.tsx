@@ -8,13 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import type { Transaction } from '@/lib/types';
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
 });
 
-const calculateMonthlySummary = (transactions: typeof mockTransactions) => {
+const calculateMonthlySummary = (transactions: Transaction[]) => {
   const monthlySummary = new Map<string, { income: number; fixed: number; variable: number }>();
 
   transactions.forEach(t => {
@@ -93,12 +94,8 @@ export function FinancialProjection() {
 
   const dailyStatus = useMemo(() => {
     const daysInMonth = getDaysInMonth(today);
-    const startOfCurrentMonth = startOfMonth(today);
     const lastRecordedMonth = Array.from(calculateMonthlySummary(mockTransactions).keys()).sort().pop() || format(today, 'yyyy-MM');
     const base = calculateMonthlySummary(mockTransactions).get(lastRecordedMonth) || { income: 0, fixed: 0, variable: 0 };
-
-    const dailyIncome = base.income / daysInMonth;
-    const dailyExpense = (base.fixed + base.variable) / daysInMonth;
 
     const todayIncome = mockTransactions.filter(t => format(new Date(t.date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') && t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
     const todayExpense = mockTransactions.filter(t => format(new Date(t.date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') && t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
