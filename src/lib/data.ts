@@ -1,6 +1,6 @@
 import type { Transaction } from './types';
 
-export const mockTransactions: Transaction[] = [
+export let mockTransactions: Transaction[] = [
   { id: '1', date: '2024-07-01', description: 'Salário Mensal', amount: 5000, type: 'income', category: 'fixed' },
   { id: '2', date: '2024-07-01', description: 'Aluguel', amount: 1200, type: 'expense', category: 'fixed' },
   { id: '3', date: '2024-07-03', description: 'Supermercado', amount: 150.75, type: 'expense', category: 'variable' },
@@ -14,3 +14,26 @@ export const mockTransactions: Transaction[] = [
   { id: '11', date: '2024-07-25', description: 'Transporte Público', amount: 50, type: 'expense', category: 'variable' },
   { id: '12', date: '2024-07-28', description: 'Dividendo de Ações', amount: 125, type: 'income', category: 'variable' },
 ];
+
+// This is a mock database. In a real application, you would use a proper database.
+export const dataStore = {
+  getTransactions: () => mockTransactions.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => {
+    const newTransaction = { ...transaction, id: Date.now().toString() };
+    mockTransactions.push(newTransaction);
+    return newTransaction;
+  },
+  updateTransaction: (updatedTransaction: Transaction) => {
+    mockTransactions = mockTransactions.map(t => t.id === updatedTransaction.id ? updatedTransaction : t);
+    return updatedTransaction;
+  },
+  deleteTransaction: (id: string) => {
+    mockTransactions = mockTransactions.filter(t => t.id !== id);
+  },
+  clearAllTransactions: () => {
+    mockTransactions = [];
+  },
+  findTransactionById: (id: string) => {
+    return mockTransactions.find(t => t.id === id);
+  }
+};

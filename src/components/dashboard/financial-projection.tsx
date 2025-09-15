@@ -3,12 +3,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import { addMonths, format, getDaysInMonth, startOfMonth, eachMonthOfInterval, endOfYear, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { mockTransactions } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import type { Transaction } from '@/lib/types';
+import { useToast } from "@/hooks/use-toast";
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -39,10 +39,9 @@ const calculateMonthlySummary = (transactions: Transaction[]) => {
   return monthlySummary;
 };
 
-const LOCAL_STORAGE_KEY = 'transactions';
-
 export function FinancialProjection() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const { toast } = useToast();
   const today = new Date();
   const futureMonths = eachMonthOfInterval({
     start: startOfMonth(today),
@@ -52,38 +51,35 @@ export function FinancialProjection() {
   const [projectionMonth, setProjectionMonth] = useState(format(endOfMonth(today), 'yyyy-MM-dd'));
   
   useEffect(() => {
-    try {
-      const storedTransactions = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (storedTransactions) {
-        setTransactions(JSON.parse(storedTransactions));
-      } else {
-        setTransactions(mockTransactions);
-      }
-    } catch (error) {
-      console.error("Failed to read from localStorage", error);
-      setTransactions(mockTransactions);
-    }
-
-    const handleStorageChange = (event: StorageEvent) => {
-        if (event.key === LOCAL_STORAGE_KEY) {
-            try {
-                const storedTransactions = localStorage.getItem(LOCAL_STORAGE_KEY);
-                if (storedTransactions) {
-                    setTransactions(JSON.parse(storedTransactions));
-                }
-            } catch (error) {
-                console.error("Failed to read from localStorage on change", error);
-            }
+    const fetchTransactions = async () => {
+        try {
+          const response = await fetch('/api/transactions');
+          if (!response.ok) throw new Error('Failed to fetch');
+          const data = await response.json();
+          setTransactions(data);
+        } catch (error) {
+          toast({
+            title: "Erro",
+            description: "Não foi possível carregar as transações para o painel.",
+            variant: "destructive",
+          });
         }
+      };
+
+    fetchTransactions();
+
+    const handleStorageChange = () => {
+        fetchTransactions();
     }
     
-    window.addEventListener('storage', handleStorageChange);
+    // Using a custom event to trigger refresh from other components
+    window.addEventListener('transactions-updated', handleStorageChange);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('transactions-updated', handleStorageChange);
     };
 
-  }, []);
+  }, [toast]);
 
   const processedData = useMemo(() => {
     const monthlySummary = calculateMonthlySummary(transactions);
@@ -98,6 +94,8 @@ export function FinancialProjection() {
     };
 
     const monthsToProject = eachMonthOfInterval(projectionInterval);
+
+    if (monthsToProject.length === 0) return [];
 
     const chartData = monthsToProject.map(monthDate => {
       const monthKey = format(monthDate, 'yyyy-MM');

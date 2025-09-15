@@ -1,67 +1,116 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { mockTransactions } from "@/lib/data";
 import { TransactionsTable } from "@/components/transactions/transactions-table";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EditTransactionDialog } from "@/components/transactions/edit-transaction-dialog";
 import type { Transaction } from "@/lib/types";
-
-const LOCAL_STORAGE_KEY = 'transactions';
+import { useToast } from "@/hooks/use-toast";
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  const [isClient, setIsClient] = useState(false);
+  const { toast } = useToast();
+
+  const fetchTransactions = async () => {
+    try {
+      const response = await fetch('/api/transactions');
+      if (!response.ok) throw new Error('Failed to fetch');
+      const data = await response.json();
+      setTransactions(data);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as transações.",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
-    setIsClient(true);
-    try {
-      const storedTransactions = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (storedTransactions) {
-        setTransactions(JSON.parse(storedTransactions));
-      } else {
-        // Initialize with mock data if local storage is empty
-        setTransactions(mockTransactions);
-      }
-    } catch (error) {
-        // If local storage is not available or reading fails, use mock data
-        console.error("Failed to read from localStorage", error);
-        setTransactions(mockTransactions);
-    }
+    fetchTransactions();
   }, []);
 
-  useEffect(() => {
-    if (isClient) {
-        try {
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(transactions));
-        } catch (error) {
-            console.error("Failed to write to localStorage", error);
-        }
+  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+    try {
+      const response = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transaction),
+      });
+      if (!response.ok) throw new Error('Failed to add transaction');
+      fetchTransactions(); // Re-fetch to update the list
+    } catch (error) {
+       toast({
+        title: "Erro",
+        description: "Não foi possível adicionar a transação.",
+        variant: "destructive",
+      });
     }
-  }, [transactions, isClient]);
-
-
-  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
-    const newTransaction = {
-      ...transaction,
-      id: Date.now().toString(),
-    };
-    setTransactions(prev => [newTransaction, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
   }
 
-  const editTransaction = (updatedTransaction: Transaction) => {
-    setTransactions(prev => prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    setEditingTransaction(null);
+  const editTransaction = async (updatedTransaction: Transaction) => {
+    try {
+        const response = await fetch(`/api/transactions/${updatedTransaction.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedTransaction),
+        });
+        if (!response.ok) throw new Error('Failed to update transaction');
+        fetchTransactions();
+        setEditingTransaction(null);
+        toast({
+            title: "Sucesso",
+            description: "Transação atualizada."
+        })
+    } catch (error) {
+        toast({
+            title: "Erro",
+            description: "Não foi possível atualizar a transação.",
+            variant: "destructive",
+        });
+    }
   }
 
-  const deleteTransaction = (id: string) => {
-    setTransactions(prev => prev.filter(t => t.id !== id));
+  const deleteTransaction = async (id: string) => {
+    try {
+        const response = await fetch(`/api/transactions/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete transaction');
+        fetchTransactions();
+        toast({
+            title: "Sucesso",
+            description: "Transação apagada."
+        })
+    } catch (error) {
+        toast({
+            title: "Erro",
+            description: "Não foi possível apagar a transação.",
+            variant: "destructive",
+        });
+    }
   }
   
-  const clearAllTransactions = () => {
-    setTransactions([]);
+  const clearAllTransactions = async () => {
+    try {
+        const response = await fetch('/api/transactions', {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to clear transactions');
+        fetchTransactions();
+        toast({
+            title: "Sucesso",
+            description: "Todas as transações foram apagadas."
+        })
+    } catch (error) {
+         toast({
+            title: "Erro",
+            description: "Não foi possível limpar as transações.",
+            variant: "destructive",
+        });
+    }
   }
 
   const openEditDialog = (transaction: Transaction) => {
