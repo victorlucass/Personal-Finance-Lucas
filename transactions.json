@@ -30,7 +30,7 @@
     "description": "Salário Mensal",
     "amount": 6500,
     "type": "income",
-    "category": "variable",
+    "category": "fixed",
     "date": "2025-09-15T23:31:48.371Z",
     "paymentDate": "2025-10-10T04:00:00.000Z",
     "id": "1757979139286"
@@ -53,5 +53,68 @@
     "date": "2025-09-15T23:32:40.891Z",
     "paymentDate": "2025-10-10T04:00:00.000Z",
     "id": "1757979232442"
+  },
+  {
+    "description": "Volante Pablo 3/4",
+    "amount": 250,
+    "type": "income",
+    "category": "variable",
+    "date": "2025-09-15T23:33:52.181Z",
+    "dueDate": "2025-10-10T04:00:00.000Z",
+    "id": "1757979265119",
+    "paymentDate": "2025-10-10T04:00:00.000Z"
+  },
+  {
+    "description": "Fatura Itaú - Outubro",
+    "amount": 892.48,
+    "type": "expense",
+    "category": "variable",
+    "date": "2025-09-15T23:34:24.778Z",
+    "dueDate": "2025-10-10T04:00:00.000Z",
+    "id": "1757979329718"
+  },
+  {
+    "description": "Energia",
+    "amount": 144,
+    "type": "expense",
+    "category": "variable",
+    "date": "2025-09-15T23:35:29.539Z",
+    "dueDate": "2025-10-10T04:00:00.000Z",
+    "id": "1757979350207"
+  },
+  {
+    "description": "MEI",
+    "amount": 80.9,
+    "type": "expense",
+    "category": "fixed",
+    "date": "2025-09-15T23:35:49.206Z",
+    "dueDate": "2025-10-20T04:00:00.000Z",
+    "id": "1757979366877"
+  },
+  {
+    "description": "Internet",
+    "amount": 124.9,
+    "type": "expense",
+    "category": "fixed",
+    "date": "2025-09-15T23:39:52.646Z",
+    "dueDate": "2025-10-10T04:00:00.000Z",
+    "id": "1757979620586"
+  },
+  {
+    "description": "Celular",
+    "amount": 59.99,
+    "type": "expense",
+    "category": "fixed",
+    "date": "2025-09-15T23:40:19.849Z",
+    "id": "1757979628053"
+  },
+  {
+    "description": "Aluguel",
+    "amount": 900,
+    "type": "expense",
+    "category": "fixed",
+    "date": "2025-09-15T23:40:27.308Z",
+    "dueDate": "2025-10-10T04:00:00.000Z",
+    "id": "1757979666974"
   }
 ]

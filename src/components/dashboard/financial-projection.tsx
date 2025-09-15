@@ -94,8 +94,8 @@ export function FinancialProjection() {
     
     const lastMonthSummary = monthlySummary.get(lastRecordedMonthKey) || { income: { fixed: 0, variable: 0 }, expense: { fixed: 0, variable: 0 } };
     
-    const baseIncome = lastMonthSummary.income.fixed + lastMonthSummary.income.variable;
-    const baseExpense = lastMonthSummary.expense.fixed + lastMonthSummary.expense.variable;
+    const baseIncome = lastMonthSummary.income.fixed;
+    const baseExpense = lastMonthSummary.expense.fixed;
 
     const initialBalance = transactions.reduce((acc, t) => {
         return acc + (t.type === 'income' ? t.amount : -t.amount)
