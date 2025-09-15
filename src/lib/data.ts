@@ -1,39 +1,67 @@
 import type { Transaction } from './types';
+import fs from 'fs';
+import path from 'path';
 
-export let mockTransactions: Transaction[] = [
-  { id: '1', date: '2024-07-01', description: 'Salário Mensal', amount: 5000, type: 'income', category: 'fixed' },
-  { id: '2', date: '2024-07-01', description: 'Aluguel', amount: 1200, type: 'expense', category: 'fixed' },
-  { id: '3', date: '2024-07-03', description: 'Supermercado', amount: 150.75, type: 'expense', category: 'variable' },
-  { id: '4', date: '2024-07-05', description: 'Conta de Internet', amount: 60, type: 'expense', category: 'fixed' },
-  { id: '5', date: '2024-07-10', description: 'Jantar com amigos', amount: 85.50, type: 'expense', category: 'variable' },
-  { id: '6', date: '2024-07-12', description: 'Projeto Freelance', amount: 750, type: 'income', category: 'variable' },
-  { id: '7', date: '2024-07-15', description: 'Academia', amount: 40, type: 'expense', category: 'fixed' },
-  { id: '8', date: '2024-07-18', description: 'Sapatos Novos', amount: 120, type: 'expense', category: 'variable' },
-  { id: '9', date: '2024-07-20', description: 'Conta de Luz', amount: 75, type: 'expense', category: 'fixed' },
-  { id: '10', date: '2024-07-22', description: 'Ingressos de Cinema', amount: 25, type: 'expense', category: 'variable' },
-  { id: '11', date: '2024-07-25', description: 'Transporte Público', amount: 50, type: 'expense', category: 'variable' },
-  { id: '12', date: '2024-07-28', description: 'Dividendo de Ações', amount: 125, type: 'income', category: 'variable' },
-];
+// Caminho para o nosso "banco de dados" JSON
+const dbPath = path.resolve(process.cwd(), 'transactions.json');
 
-// This is a mock database. In a real application, you would use a proper database.
+// Função para ler as transações do arquivo
+const readTransactions = (): Transaction[] => {
+  try {
+    if (!fs.existsSync(dbPath)) {
+      // Se o arquivo não existir, cria um com um array vazio
+      fs.writeFileSync(dbPath, JSON.stringify([]));
+      return [];
+    }
+    const data = fs.readFileSync(dbPath, 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Failed to read transactions:', error);
+    return [];
+  }
+};
+
+// Função para escrever as transações no arquivo
+const writeTransactions = (transactions: Transaction[]) => {
+  try {
+    fs.writeFileSync(dbPath, JSON.stringify(transactions, null, 2));
+  } catch (error) {
+    console.error('Failed to write transactions:', error);
+  }
+};
+
+// Inicializa as transações a partir do arquivo
+let mockTransactions: Transaction[] = readTransactions();
+
 export const dataStore = {
-  getTransactions: () => mockTransactions.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+  getTransactions: () => {
+    mockTransactions = readTransactions();
+    return mockTransactions.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  },
   addTransaction: (transaction: Omit<Transaction, 'id'>) => {
+    mockTransactions = readTransactions();
     const newTransaction = { ...transaction, id: Date.now().toString() };
     mockTransactions.push(newTransaction);
+    writeTransactions(mockTransactions);
     return newTransaction;
   },
   updateTransaction: (updatedTransaction: Transaction) => {
+    mockTransactions = readTransactions();
     mockTransactions = mockTransactions.map(t => t.id === updatedTransaction.id ? updatedTransaction : t);
+    writeTransactions(mockTransactions);
     return updatedTransaction;
   },
   deleteTransaction: (id: string) => {
+    mockTransactions = readTransactions();
     mockTransactions = mockTransactions.filter(t => t.id !== id);
+    writeTransactions(mockTransactions);
   },
   clearAllTransactions: () => {
     mockTransactions = [];
+    writeTransactions(mockTransactions);
   },
   findTransactionById: (id: string) => {
+    mockTransactions = readTransactions();
     return mockTransactions.find(t => t.id === id);
   }
 };
