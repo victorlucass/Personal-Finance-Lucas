@@ -212,7 +212,6 @@ export function FinancialProjection() {
   }, [transactions, today]);
 
   const chartConfig = {
-    saldoMensal: { label: "Saldo do Mês", color: "hsl(var(--chart-1))" },
     despesa: { label: "Despesa", color: "hsl(var(--chart-2))" },
     saldoAcumulado: { label: "Saldo Acumulado", color: "hsl(var(--chart-3))" },
   };
@@ -305,9 +304,8 @@ export function FinancialProjection() {
                     />}
                 />
                 <Legend />
-                <Bar dataKey="saldoMensal" fill="var(--color-saldoMensal)" radius={4} name="Saldo do Mês" />
                 <Bar dataKey="despesa" fill="var(--color-despesa)" radius={4} name="Despesa" />
-                <Line type="monotone" dataKey="saldoAcumulado" strokeWidth={2} stroke="var(--color-saldoAcumulado)" dot={false} name="Saldo Acumulado" />
+                <Line type="monotone" dataKey="saldoAcumulado" strokeWidth={2} stroke="var(--color-saldoAcumulado)" dot={true} name="Saldo Acumulado" />
                 </ComposedChart>
             </ChartContainer>
             </CardContent>
@@ -366,3 +364,5 @@ export function FinancialProjection() {
     </div>
   );
 }
+
+    
