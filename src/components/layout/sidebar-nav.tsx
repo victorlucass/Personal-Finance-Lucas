@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   ArrowRightLeft,
   DollarSign,
+  TrendingUp
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import { Button } from "@/components/ui/button";
 const navItems = [
   { href: "/", label: "Painel", icon: LayoutDashboard },
   { href: "/transactions", label: "Transações", icon: ArrowRightLeft },
+  { href: "/cash-flow", label: "Fluxo de Caixa", icon: TrendingUp },
 ];
 
 export function SidebarNav() {
