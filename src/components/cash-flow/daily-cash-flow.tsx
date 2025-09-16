@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import { addDays, format, startOfToday, eachDayOfInterval, isBefore, isEqual, endOfDay } from 'date-fns';
+import { addDays, format, startOfToday, eachDayOfInterval, isBefore, isEqual } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer } from 'recharts';
@@ -118,7 +118,7 @@ export function DailyCashFlow() {
         <CardDescription>
             Mostra a evolução do seu saldo dia a dia com base nas datas de pagamento e vencimento.
         </CardDescription>
-        </Header>
+        </CardHeader>
         <CardContent>
         <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
             <ResponsiveContainer width="100%" height={400}>
