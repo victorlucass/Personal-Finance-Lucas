@@ -91,7 +91,7 @@ export function FinancialProjection() {
     
     const previousMonth = subMonths(startOfMonth(today), 1);
     const initialBalance = transactions
-        .filter(t => !isBefore(new Date(t.date), previousMonth))
+        .filter(t => isBefore(new Date(t.date), startOfMonth(today)))
         .reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
 
     const projectionInterval = {
@@ -127,21 +127,17 @@ export function FinancialProjection() {
         
         let totalIncome, totalExpense;
         
-        if (historicalData && isBefore(monthDate, today)) {
+        if (historicalData && (isBefore(monthDate, today) || isSameMonth(monthDate, today))) {
             totalIncome = historicalData.income.fixed + historicalData.income.variable;
             totalExpense = historicalData.expense.fixed + historicalData.expense.variable;
             
-            if(historicalData.income.fixed > 0 || historicalData.expense.fixed > 0) {
+            if(historicalData.income.fixed > 0) {
               lastMonthFixedIncome = historicalData.income.fixed;
+            }
+            if(historicalData.expense.fixed > 0) {
               lastMonthFixedExpense = historicalData.expense.fixed;
             }
-        } else if (isSameMonth(monthDate, today) && historicalData) {
-            totalIncome = historicalData.income.fixed + historicalData.income.variable;
-            totalExpense = historicalData.expense.fixed + historicalData.expense.variable;
-            if(historicalData.income.fixed > 0 || historicalData.expense.fixed > 0) {
-              lastMonthFixedIncome = historicalData.income.fixed;
-              lastMonthFixedExpense = historicalData.expense.fixed;
-            }
+
         } else { 
             totalIncome = lastMonthFixedIncome;
             totalExpense = lastMonthFixedExpense;
@@ -213,6 +209,7 @@ export function FinancialProjection() {
 
   const chartConfig = {
     despesa: { label: "Despesa", color: "hsl(var(--chart-2))" },
+    saldoMensal: { label: "Saldo do Mês", color: "hsl(var(--chart-1))" },
     saldoAcumulado: { label: "Saldo Acumulado", color: "hsl(var(--chart-3))" },
   };
 
@@ -291,7 +288,7 @@ export function FinancialProjection() {
                     tickLine={false}
                     axisLine={false}
                     tickMargin={10}
-                    tickFormatter={(value) => currencyFormatter.format(value)}
+                    tickFormatter={(value) => currencyFormatter.format(value as number)}
                 />
                 <Tooltip
                     cursor={{ fill: 'hsl(var(--muted))' }}
@@ -305,6 +302,7 @@ export function FinancialProjection() {
                 />
                 <Legend />
                 <Bar dataKey="despesa" fill="var(--color-despesa)" radius={4} name="Despesa" />
+                <Bar dataKey="saldoMensal" fill="var(--color-saldoMensal)" radius={4} name="Saldo do Mês" />
                 <Line type="monotone" dataKey="saldoAcumulado" strokeWidth={2} stroke="var(--color-saldoAcumulado)" dot={true} name="Saldo Acumulado" />
                 </ComposedChart>
             </ChartContainer>
@@ -364,5 +362,3 @@ export function FinancialProjection() {
     </div>
   );
 }
-
-    
