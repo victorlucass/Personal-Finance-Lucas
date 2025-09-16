@@ -1,31 +1,36 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import { addDays, startOfToday, eachDayOfInterval, isBefore, isEqual, format } from 'date-fns';
+import { addDays, startOfToday, eachDayOfInterval, isBefore, isEqual, format, startOfMonth, endOfMonth, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import type { Transaction } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
+import { DayDetailsDialog } from './day-details-dialog';
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
 });
 
-type DailyBalance = {
-    date: Date;
+type DailyBalanceInfo = {
     balance: number;
     isPositive: boolean;
+    transactions: Transaction[];
+    dayBalanceChange: number;
 };
 
 export function CashFlowCalendar() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [currentMonth, setCurrentMonth] = useState<Date>(startOfToday());
   const { toast } = useToast();
-  const today = startOfToday();
-  const projectionDays = 60; // Project for 2 months to fill calendar view
   
+  const projectionDays = 90; // Project for ~3 months
+
   useEffect(() => {
     const fetchTransactions = async () => {
         try {
@@ -48,30 +53,37 @@ export function CashFlowCalendar() {
   const dailyBalances = useMemo(() => {
     if (transactions.length === 0) return {};
 
+    const calendarStart = startOfMonth(currentMonth);
+
     const initialBalance = transactions
       .filter(t => {
         const eventDate = t.type === 'income' ? t.paymentDate : t.dueDate;
-        return eventDate && isBefore(new Date(eventDate), today);
+        return eventDate && isBefore(new Date(eventDate), calendarStart);
       })
       .reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
     
     const interval = {
-        start: today,
-        end: addDays(today, projectionDays),
+        start: calendarStart,
+        end: addDays(calendarStart, projectionDays),
     };
 
     const daysToProject = eachDayOfInterval(interval);
     let accumulatedBalance = initialBalance;
 
-    const balances: Record<string, { balance: number, isPositive: boolean }> = {};
+    const balances: Record<string, DailyBalanceInfo> = {};
 
     daysToProject.forEach((day) => {
-        const dailyIncome = transactions
-            .filter(t => t.type === 'income' && t.paymentDate && isEqual(startOfToday(new Date(t.paymentDate)), day))
+        const dayTransactions = transactions.filter(t => {
+            const eventDate = t.type === 'income' ? t.paymentDate : t.dueDate;
+            return eventDate && isEqual(startOfToday(new Date(eventDate)), day);
+        });
+
+        const dailyIncome = dayTransactions
+            .filter(t => t.type === 'income')
             .reduce((acc, t) => acc + t.amount, 0);
 
-        const dailyExpense = transactions
-            .filter(t => t.type === 'expense' && t.dueDate && isEqual(startOfToday(new Date(t.dueDate)), day))
+        const dailyExpense = dayTransactions
+            .filter(t => t.type === 'expense')
             .reduce((acc, t) => acc + t.amount, 0);
         
         const dayBalanceChange = dailyIncome - dailyExpense;
@@ -80,23 +92,42 @@ export function CashFlowCalendar() {
         balances[format(day, 'yyyy-MM-dd')] = {
             balance: accumulatedBalance,
             isPositive: accumulatedBalance >= 0,
+            transactions: dayTransactions,
+            dayBalanceChange: dayBalanceChange,
         };
     });
 
     return balances;
-  }, [transactions, today]);
+  }, [transactions, currentMonth]);
+
+  const handleDayClick = (day: Date) => {
+    const dayString = format(day, 'yyyy-MM-dd');
+    if (dailyBalances[dayString]) {
+        setSelectedDay(day);
+    }
+  };
 
   const DayWithBalance = ({ date, ...props }: { date: Date } & any) => {
     const dateString = format(date, 'yyyy-MM-dd');
     const dayData = dailyBalances[dateString];
     
-    // Default day rendering from react-day-picker
     const day = format(date, 'd');
     
     return (
-      <div {...props} className={cn(props.className, 'relative h-full w-full flex flex-col justify-between p-1')}>
-        <div className="text-sm text-right">{day}</div>
-        {dayData && (
+      <button 
+        {...props} 
+        onClick={() => handleDayClick(date)}
+        className={cn(
+            props.className, 
+            'relative h-full w-full flex flex-col justify-between p-1 text-left',
+            {'cursor-pointer hover:bg-muted': !!dayData}
+        )}
+      >
+        <div className={cn(
+            "text-sm text-right",
+            isSameDay(date, startOfToday()) && "font-bold text-primary"
+        )}>{day}</div>
+        {dayData && (dayData.dayBalanceChange !== 0 || isSameDay(date, startOfToday())) && (
           <div className={cn(
             "text-xs font-bold text-center rounded-sm",
             dayData.isPositive ? 'bg-accent/30 text-accent-foreground' : 'bg-destructive/20 text-destructive'
@@ -107,32 +138,51 @@ export function CashFlowCalendar() {
             }).format(dayData.balance)}
           </div>
         )}
-      </div>
+      </button>
     );
   };
+  
+  const selectedDayInfo = useMemo(() => {
+    if(!selectedDay) return null;
+    const dayString = format(selectedDay, 'yyyy-MM-dd');
+    return dailyBalances[dayString];
+  }, [selectedDay, dailyBalances]);
 
   return (
-    <Card>
-        <CardHeader>
-            <CardTitle>Calendário de Fluxo de Caixa</CardTitle>
-            <CardDescription>
-                Veja a projeção do seu saldo para os próximos dias.
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <Calendar
-                locale={ptBR}
-                numberOfMonths={2}
-                className="p-0"
-                classNames={{
-                    day: 'h-24 w-full text-left align-top',
-                    day_outside: 'text-muted-foreground/50',
-                }}
-                components={{
-                    Day: DayWithBalance,
-                }}
+    <>
+        <Card>
+            <CardHeader>
+                <CardTitle>Calendário de Fluxo de Caixa</CardTitle>
+                <CardDescription>
+                    Clique em um dia para ver os detalhes das transações e o saldo.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Calendar
+                    locale={ptBR}
+                    month={currentMonth}
+                    onMonthChange={setCurrentMonth}
+                    numberOfMonths={2}
+                    className="p-0"
+                    classNames={{
+                        day: 'h-24 w-full p-0 align-top',
+                        day_outside: 'text-muted-foreground/50',
+                    }}
+                    components={{
+                        Day: DayWithBalance,
+                    }}
+                />
+            </CardContent>
+        </Card>
+        {selectedDay && selectedDayInfo && (
+            <DayDetailsDialog 
+                isOpen={!!selectedDay}
+                onClose={() => setSelectedDay(null)}
+                date={selectedDay}
+                dayInfo={selectedDayInfo}
             />
-        </CardContent>
-    </Card>
+        )}
+    </>
   );
 }
+
