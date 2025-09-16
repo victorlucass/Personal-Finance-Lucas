@@ -17,8 +17,6 @@ import {
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const navItems = [
   { href: "/", label: "Painel", icon: LayoutDashboard },
@@ -28,7 +26,6 @@ const navItems = [
 export function SidebarNav() {
   const pathname = usePathname();
   const { state } = useSidebar();
-  const userAvatar = PlaceHolderImages.find((p) => p.id === "user-avatar");
 
   return (
     <>
@@ -40,7 +37,7 @@ export function SidebarNav() {
           <DollarSign className="size-8 text-primary" />
           {state === "expanded" && (
             <h1 className="text-lg font-semibold text-sidebar-foreground">
-              Finance Gazer
+              Finance Lucas
             </h1>
           )}
         </div>
@@ -66,26 +63,7 @@ export function SidebarNav() {
       </SidebarMenu>
 
       <SidebarFooter>
-        <div className="flex items-center gap-3 p-2">
-          <Avatar>
-            {userAvatar && <AvatarImage
-              src={userAvatar.imageUrl}
-              alt={userAvatar.description}
-              data-ai-hint={userAvatar.imageHint}
-            />}
-            <AvatarFallback>U</AvatarFallback>
-          </Avatar>
-          {state === "expanded" && (
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-sidebar-foreground">
-                Usuário
-              </span>
-              <span className="text-xs text-sidebar-foreground/70">
-                usuario@email.com
-              </span>
-            </div>
-          )}
-        </div>
+        {/* User section removed as requested */}
       </SidebarFooter>
     </>
   );

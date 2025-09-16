@@ -1,4 +1,4 @@
-# **App Name**: Personal Finance Gazer
+# **App Name**: Personal Finance Lucas
 
 ## Core Features:
 
